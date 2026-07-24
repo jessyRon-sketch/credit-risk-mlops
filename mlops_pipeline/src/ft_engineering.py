@@ -17,6 +17,59 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
 
+# ==========================================
+# Función de limpieza de datos
+# ==========================================
+
+def limpiar_datos(df):
+    """
+    Aplica las reglas de limpieza e ingeniería de características
+    al dataset.
+    """
+
+    # ==========================================
+    # Eliminación de variables
+    # ==========================================
+
+    columnas_eliminar = [
+        "saldo_mora",
+        "saldo_total",
+        "saldo_principal",
+        "saldo_mora_codeudor",
+        "puntaje",
+        "fecha_prestamo"
+    ]
+
+    df = df.drop(columns=columnas_eliminar)
+
+    # ==========================================
+    # Limpieza de tendencia_ingresos
+    # ==========================================
+
+    valores_validos = {
+        "Creciente",
+        "Estable",
+        "Decreciente"
+    }
+
+    df["tendencia_ingresos"] = df["tendencia_ingresos"].where(
+        df["tendencia_ingresos"].isin(valores_validos),
+        np.nan
+    )
+
+    # ==========================================
+    # Corrección de edades atípicas
+    # ==========================================
+
+    df.loc[df["edad_cliente"] > 100, "edad_cliente"] = np.nan
+
+    # ==========================================
+    # Conversión de variables categóricas
+    # ==========================================
+
+    df["tipo_credito"] = df["tipo_credito"].astype(str)
+
+    return df
 
 def preprocesar_datos():
     """
@@ -38,54 +91,20 @@ def preprocesar_datos():
     df = pd.read_excel(ruta_datos)
 
     # ==========================================
-    # 2. Eliminación de variables
+    # 2. Limpieza de datos
     # ==========================================
 
-    columnas_eliminar = [
-     "saldo_mora",
-     "saldo_total",
-     "saldo_principal",
-     "saldo_mora_codeudor",
-     "puntaje",
-     "fecha_prestamo"]
-
-    df = df.drop(columns=columnas_eliminar)
+    df = limpiar_datos(df)
 
     # ==========================================
-    # 3. Limpieza de tendencia_ingresos
-    # ==========================================
-
-    valores_validos = {
-        "Creciente",
-        "Estable",
-        "Decreciente"}
-    
-    df["tendencia_ingresos"] = df["tendencia_ingresos"].where(
-        df["tendencia_ingresos"].isin(valores_validos),
-        np.nan
-    )
-
-    # ==========================================
-    # 4. Corrección de edades atípicas
-    # ==========================================
-
-    df.loc[df["edad_cliente"] > 100, "edad_cliente"] = np.nan
-
-    # ==========================================
-    # 5. Conversión de variables categóricas
-    # ==========================================
-
-    df["tipo_credito"] = df["tipo_credito"].astype(str)
-
-    # ==========================================
-    # 6. Separación de Features y Target
+    # 3. Separación de Features y Target
     # ==========================================
 
     X = df.drop(columns="Pago_atiempo")
     y = df["Pago_atiempo"]
 
     # ==========================================
-    # 7. Identificación de variables
+    # 4. Identificación de variables
     # ==========================================
 
     num_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
@@ -93,7 +112,7 @@ def preprocesar_datos():
     cat_features = X.select_dtypes(include=["object", "string"]).columns.tolist()
 
     # ==========================================
-    # 8. Pipeline para variables numéricas
+    # 5. Pipeline para variables numéricas
     # ==========================================
 
     num_transformer = Pipeline(
@@ -101,7 +120,7 @@ def preprocesar_datos():
         ("imputer", SimpleImputer(strategy="median"))])
 
     # ==========================================
-    # 9. Pipeline para variables categóricas
+    # 6. Pipeline para variables categóricas
     # ==========================================
 
     cat_transformer = Pipeline(
@@ -110,7 +129,7 @@ def preprocesar_datos():
         ("onehot", OneHotEncoder(handle_unknown="ignore"))])
 
     # ==========================================
-    # 10. ColumnTransformer
+    # 7. ColumnTransformer
     # ==========================================
 
     preprocessor = ColumnTransformer(
@@ -119,7 +138,7 @@ def preprocesar_datos():
         ("categoricas", cat_transformer, cat_features)])
 
     # ==========================================
-    # 11. División Train/Test
+    # 8. División Train/Test
     # ==========================================
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -130,7 +149,7 @@ def preprocesar_datos():
     stratify=y)
 
     # ==========================================
-    # 12. Aplicar el preprocesamiento
+    # 9. Aplicar el preprocesamiento
     # ==========================================
 
     X_train_preprocessed = preprocessor.fit_transform(X_train)
