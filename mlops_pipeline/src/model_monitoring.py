@@ -248,8 +248,7 @@ def calcular_chi2(df_historico, df_simulado, variables_categoricas):
 
     return pd.DataFrame(resultados_chi2)
 
-
-if __name__ == "__main__":
+def ejecutar_monitoreo():
 
     (
         modelo,
@@ -257,131 +256,146 @@ if __name__ == "__main__":
         df_historico,
         df_simulado,
     ) = cargar_recursos()
-
+    
     # ==========================================
     # Limpieza de las bases
     # ==========================================
-
+    
     df_historico = limpiar_datos(df_historico)
     df_simulado = limpiar_datos(df_simulado)
-
+    
     print("======================================")
     print("Recursos cargados y bases procesadas")
     print("======================================")
     print(f"Histórico : {df_historico.shape}")
     print(f"Simulado  : {df_simulado.shape}")
-
+    
     # ==========================================
     # Generar predicciones sobre la base simulada
     # ==========================================
-
+    
     # Separar variables independientes y objetivo
     X_simulado = df_simulado.drop(columns="Pago_atiempo")
     y_simulado = df_simulado["Pago_atiempo"]
-
+    
     # Aplicar el mismo preprocesamiento utilizado en entrenamiento
     X_simulado_preprocessed = preprocessor.transform(X_simulado)
-
+    
     # Generar predicciones
     predicciones = modelo.predict(X_simulado_preprocessed)
-
+    
     # Agregar predicciones al dataset
     df_resultados = df_simulado.copy()
     df_resultados["Prediccion_Modelo"] = predicciones
-
+    
     print("\n========================================")
     print("Predicciones generadas correctamente")
     print("========================================")
-
+    
     print(df_resultados[
         ["Pago_atiempo", "Prediccion_Modelo"]
     ].head())
-
+    
     # ==========================================
     # Identificar variables numéricas y categóricas
-     # ==========================================
-
+    # ==========================================
+    
     variable_objetivo = "Pago_atiempo"
-
+    
     variables_numericas = df_historico.select_dtypes(
         include=["int64", "float64"]
     ).columns.tolist()
-
+    
     variables_categoricas = df_historico.select_dtypes(
         include=["object", "string"]
     ).columns.tolist()
-
+    
     # Eliminar la variable objetivo de las variables numéricas
     if variable_objetivo in variables_numericas:
         variables_numericas.remove(variable_objetivo)
-
+    
     print("\n========================================")
     print("Variables identificadas")
     print("========================================")
-
+    
     print(f"Variables numéricas : {len(variables_numericas)}")
     print(f"Variables categóricas: {len(variables_categoricas)}")
-
+    
     # ==========================================
     # Calcular KS Test
     # ==========================================
-
+    
     df_ks = calcular_ks(
     df_historico,
     df_simulado,
     variables_numericas
     )
-
+    
     print("\n========================================")
     print("Kolmogorov-Smirnov Test")
     print("========================================")
-
+    
     print(df_ks.round(4))
-
+    
     # ==========================================
     # Calcular PSI
     # ==========================================
-
+    
     df_psi = calcular_psi(
         df_historico,
         df_simulado,
         variables_numericas
     )
-
+    
     print("\n========================================")
     print("Population Stability Index (PSI)")
     print("========================================")
-
+    
     print(df_psi.round(4))
-
+    
     # ==========================================
     # Calcular Jensen-Shannon
     # ==========================================
-
+    
     df_js = calcular_js(
         df_historico,
         df_simulado,
         variables_numericas
     )
-
+    
     print("\n========================================")
     print("Jensen-Shannon Distance")
     print("========================================")
-
+    
     print(df_js.round(4))
-
+    
     # ==========================================
     # Calcular Chi-Cuadrado
     # ==========================================
-
+    
     df_chi2 = calcular_chi2(
         df_historico,
         df_simulado,
         variables_categoricas
     )
-
+    
     print("\n========================================")
     print("Chi-Cuadrado")
     print("========================================")
-
+    
     print(df_chi2.round(4))
+
+    # ==========================================
+    # Retornar resultados
+    # ==========================================
+
+    return (
+        df_ks,
+        df_psi,
+        df_js,
+        df_chi2
+    )
+
+if __name__ == "__main__": 
+
+    ejecutar_monitoreo()

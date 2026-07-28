@@ -159,6 +159,14 @@ if __name__ == "__main__":
     plt.grid(axis="y", alpha=0.3)
 
     plt.tight_layout()
+
+    # Guardar imagen para el README
+    ruta_imagen = Path(__file__).resolve().parents[2] / "images" / "model_comparison.png"
+
+    plt.tight_layout()
+
+    plt.savefig(ruta_imagen, dpi=300, bbox_inches="tight")
+
     plt.show()
 
     # ==========================================
